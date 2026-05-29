@@ -900,68 +900,72 @@
         let isReportUnlocked = false;
 
         // ======================================
-        // PASSWORD VERIFICATION
-        // ======================================
-        function verifyPassword(event) {
-            event.preventDefault();
+// PASSWORD VERIFICATION
+// ======================================
+async function verifyPassword(event) {
+    event.preventDefault();
+    const passwordInput = document.getElementById('passwordInput');
+    const password = passwordInput.value;
+    const errorDiv = document.getElementById('passwordError');
+    const submitBtn = event.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังตรวจสอบ...';
 
-            const passwordInput = document.getElementById('passwordInput');
-            const password = passwordInput.value;
-            const errorDiv = document.getElementById('passwordError');
+    try {
+        const isValid = await callAPI('verifyReportPassword', { password: password });
+        if (isValid) {
+            isReportUnlocked = true;
+            document.getElementById('passwordLockScreen').style.display = 'none';
+            document.getElementById('reportContent').style.display = 'block';
 
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังตรวจสอบ...';
-
-            google.script.run
-                .withSuccessHandler((isValid) => {
-                    if (isValid) {
-                        isReportUnlocked = true;
-                        document.getElementById('passwordLockScreen').style.display = 'none';
-                        document.getElementById('reportContent').style.display = 'block';
-
-                        if (!reportDataLoaded) {
-                            loadData();
-                            reportDataLoaded = true;
-                        }
-
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'ปลดล็อคสำเร็จ',
-                            text: 'เข้าสู่ระบบรายงานแล้ว',
-                            timer: 1500,
-                            showConfirmButton: false
-                        });
-                    } else {
-                        errorDiv.classList.add('show');
-                        passwordInput.value = '';
-                        passwordInput.focus();
-                        setTimeout(() => errorDiv.classList.remove('show'), 3000);
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                    }
-                })
-                .withFailureHandler((error) => {
-                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถตรวจสอบรหัสผ่านได้' });
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = originalText;
-                })
-                .verifyReportPassword(password);
+            if (!reportDataLoaded) {
+                loadData();
+                reportDataLoaded = true;
+            }
+            Swal.fire({ icon: 'success', title: 'ปลดล็อคสำเร็จ', text: 'เข้าสู่ระบบรายงานแล้ว', timer: 1500, showConfirmButton: false });
+        } else {
+            errorDiv.classList.add('show');
+            passwordInput.value = '';
+            passwordInput.focus();
+            setTimeout(() => errorDiv.classList.remove('show'), 3000);
         }
+    } catch (error) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถตรวจสอบรหัสผ่านได้' });
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    }
+}
+
+
 
         // ======================================
         // LOAD NAMES
         // ======================================
-        google.script.run.withSuccessHandler((names) => {
-            const select = document.getElementById('name');
-            names.forEach(name => {
-                const option = document.createElement('option');
-                option.value = name;
-                option.textContent = name;
-                select.appendChild(option);
-            });
-        }).getNames();
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx6WVUT7w7hGOzYr4TRMfj0C6zeCKCQxeKqP1SUiQ0nAsFQWUXPWLJQcZBgkwmEiXuq/exec';
+
+// เขียนเป็นฟังก์ชัน fetch
+fetch(WEB_APP_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'getNames' }) // บอก API ว่าจะเรียก action อะไร
+})
+.then(response => response.json())
+.then(res => {
+    if (res.success) {
+        const names = res.data;
+        const select = document.getElementById('name');
+        names.forEach(name => {
+            const option = document.createElement('option');
+            option.value = name;
+            option.textContent = name;
+            select.appendChild(option);
+        });
+    }
+})
+.catch(error => console.error('Error fetching names:', error));
+
 
         // ======================================
         // GET LOCATION
@@ -1147,53 +1151,48 @@
         let animationDelay = 0;
         let personDataMap = {};
 
-        function loadData() {
-            google.script.run.withSuccessHandler((data) => {
-                allData = data.rows;
+        async function loadData() {
+    try {
+        const data = await callAPI('getData');
+        allData = data.rows;
+        const agencyFilter = document.getElementById('agencyFilter');
+        agencyFilter.innerHTML = '<option value="">-- ทั้งหมด --</option>';
+        data.uniqueEValues.forEach(val => {
+            const option = document.createElement('option');
+            option.value = val;
+            option.textContent = val;
+            agencyFilter.appendChild(option);
+        });
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('dateFilter').value = today;
+        filterData();
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
 
-                const agencyFilter = document.getElementById('agencyFilter');
-                agencyFilter.innerHTML = '<option value="">-- ทั้งหมด --</option>';
-                data.uniqueEValues.forEach(val => {
-                    const option = document.createElement('option');
-                    option.value = val;
-                    option.textContent = val;
-                    agencyFilter.appendChild(option);
-                });
+async function refreshData() {
+    Swal.fire({ title: 'กำลังรีเฟรชข้อมูล...', html: 'กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    try {
+        const data = await callAPI('getData');
+        allData = data.rows;
+        const agencyFilter = document.getElementById('agencyFilter');
+        const currentVal = agencyFilter.value;
+        agencyFilter.innerHTML = '<option value="">-- ทั้งหมด --</option>';
+        data.uniqueEValues.forEach(val => {
+            const option = document.createElement('option');
+            option.value = val;
+            option.textContent = val;
+            agencyFilter.appendChild(option);
+        });
+        agencyFilter.value = currentVal;
+        filterData();
+        Swal.fire({ icon: 'success', title: 'รีเฟรชสำเร็จ', text: 'ข้อมูลได้รับการอัพเดทแล้ว', timer: 1500, showConfirmButton: false });
+    } catch (error) {
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: 'ไม่สามารถโหลดข้อมูลได้' });
+    }
+}
 
-                // ตั้งวันที่ปัจจุบันและกรองทันที
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('dateFilter').value = today;
-                filterData();
-            }).getData();
-        }
-
-        function refreshData() {
-            Swal.fire({
-                title: 'กำลังรีเฟรชข้อมูล...',
-                html: 'กรุณารอสักครู่',
-                allowOutsideClick: false,
-                didOpen: () => Swal.showLoading()
-            });
-
-            google.script.run.withSuccessHandler((data) => {
-                allData = data.rows;
-
-                const agencyFilter = document.getElementById('agencyFilter');
-                const currentVal = agencyFilter.value;
-                agencyFilter.innerHTML = '<option value="">-- ทั้งหมด --</option>';
-                data.uniqueEValues.forEach(val => {
-                    const option = document.createElement('option');
-                    option.value = val;
-                    option.textContent = val;
-                    agencyFilter.appendChild(option);
-                });
-                agencyFilter.value = currentVal;
-
-                filterData();
-
-                Swal.fire({ icon: 'success', title: 'รีเฟรชสำเร็จ', text: 'ข้อมูลได้รับการอัพเดทแล้ว', timer: 1500, showConfirmButton: false });
-            }).getData();
-        }
 
         // ======================================
         // REPORT: DISPLAY DATA (จัดกลุ่มตามชื่อ)
@@ -1388,35 +1387,41 @@
             const agency = document.getElementById('agencyFilter').value;
             const date = document.getElementById('dateFilter').value;
 
-            if (!searchTerm && !agency && !date) {
-                Swal.fire({ icon: 'warning', title: 'กรุณากรองข้อมูล', text: 'กรุณากรองข้อมูลอย่างน้อย 1 เงื่อนไขก่อนสร้างรายงาน PDF' });
-                return;
-            }
+            async function generatePDFReport() {
+    const searchTerm = document.getElementById('searchBox').value.trim();
+    const agency = document.getElementById('agencyFilter').value;
+    const date = document.getElementById('dateFilter').value;
 
-            Swal.fire({ title: 'กำลังสร้างรายงาน PDF...', html: 'กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    if (!searchTerm && !agency && !date) {
+        Swal.fire({ icon: 'warning', title: 'กรุณากรองข้อมูล', text: 'กรุณากรองข้อมูลอย่างน้อย 1 เงื่อนไขก่อนสร้างรายงาน PDF' });
+        return;
+    }
 
-            google.script.run
-                .withSuccessHandler((result) => {
-                    Swal.close();
-                    if (result.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'สร้างรายงาน PDF สำเร็จ',
-                            html: '<p>ชื่อไฟล์: ' + result.fileName + '</p>' +
-                                  '<a href="' + result.pdfUrl + '" target="_blank" class="btn btn-primary mt-2">' +
-                                  '<i class="fas fa-download me-1"></i> เปิดไฟล์ PDF</a>',
-                            confirmButtonText: 'ปิด'
-                        });
-                    } else {
-                        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: result.error || 'ไม่สามารถสร้างรายงานได้' });
-                    }
-                })
-                .withFailureHandler((error) => {
-                    Swal.close();
-                    Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message || 'ไม่สามารถสร้างรายงานได้' });
-                })
-                .generateReport(filteredDataGlobal, { searchTerm, agency, date });
+    Swal.fire({ title: 'กำลังสร้างรายงาน PDF...', html: 'กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const result = await callAPI('generateReport', { 
+            filteredData: filteredDataGlobal, 
+            filterOptions: { searchTerm, agency, date } 
+        });
+        
+        Swal.close();
+        if (result.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'สร้างรายงาน PDF สำเร็จ',
+                html: '<p>ชื่อไฟล์: ' + result.fileName + '</p>' +
+                      '<a href="' + result.pdfUrl + '" target="_blank" class="btn btn-primary mt-2">' +
+                      '<i class="fas fa-download me-1"></i> เปิดไฟล์ PDF</a>',
+                confirmButtonText: 'ปิด'
+            });
         }
+    } catch (error) {
+        Swal.close();
+        Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message || 'ไม่สามารถสร้างรายงานได้' });
+    }
+}
+
     </script>
 </body>
 </html>
