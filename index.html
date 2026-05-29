@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบลงชื่อเข้า-ออกงาน</title>
-    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
@@ -12,673 +11,236 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        * { font-family: 'Prompt', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+        * { font-family: 'Prompt', sans-serif; box-sizing: border-box; }
         body { background: #0099cc; min-height: 100vh; padding: 20px; }
-        .main-header { background: white; border-radius: 20px; padding: 20px 30px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); text-align: center; }
-        .main-header h1 { font-size: 28px; font-weight: 700; color: #2d3748; margin-bottom: 5px; }
-        .main-header p { font-size: 14px; color: #718096; margin: 0; }
-        .tab-container { background: white; border-radius: 20px 20px 0 0; padding: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: hidden; }
+        .main-header { background: white; border-radius: 20px; padding: 20px 30px; margin-bottom: 20px; text-align: center; }
+        .tab-container { background: white; border-radius: 20px; overflow: hidden; }
         .custom-tabs { display: flex; background: #f7fafc; border-bottom: 2px solid #e2e8f0; }
-        .custom-tab { flex: 1; padding: 20px; text-align: center; cursor: pointer; border: none; background: transparent; font-size: 16px; font-weight: 500; color: #718096; transition: all 0.3s; position: relative; }
-        .custom-tab:hover { background: rgba(102, 126, 234, 0.05); color: #667eea; }
-        .custom-tab.active { color: #667eea; background: white; }
-        .custom-tab.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: #0099cc; }
-        .custom-tab i { margin-right: 8px; }
-        .tab-content-wrapper { background: white; border-radius: 0 0 20px 20px; min-height: 500px; }
+        .custom-tab { flex: 1; padding: 20px; text-align: center; cursor: pointer; border: none; background: transparent; font-weight: 500; color: #718096; }
+        .custom-tab.active { color: #0099cc; background: white; border-bottom: 3px solid #0099cc; }
+        .tab-content-wrapper { background: white; min-height: 500px; }
         .tab-pane { display: none; padding: 30px; }
-        .tab-pane.active { display: block; animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .form-group { margin-bottom: 20px; }
-        .form-label { font-weight: 500; color: #2d3748; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        .form-label i { color: #667eea; }
-        .form-control, .form-select { border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; font-size: 14px; transition: all 0.3s; }
-        .form-control:focus, .form-select:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-        .btn-primary { background: #0099cc; border: none; border-radius: 12px; padding: 14px 24px; font-weight: 500; font-size: 16px; transition: all 0.3s; width: 100%; box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
-        .btn-primary:hover { background: #007aaa; transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4); }
-        .btn-secondary { background: #6c757d; border: none; border-radius: 12px; padding: 10px 20px; font-weight: 500; transition: all 0.3s; }
-        .btn-secondary:hover { background: #5a6268; transform: translateY(-2px); }
-        .btn-success { background: #28a745; border: none; border-radius: 12px; padding: 10px 20px; font-weight: 500; transition: all 0.3s; }
-        .btn-success:hover { background: #218838; transform: translateY(-2px); }
-        .status-card { background: #e53e3e; border-radius: 12px; padding: 15px; margin-bottom: 20px; color: white; text-align: center; display: none; }
-        .status-card.success { background: #0099cc; }
-        .status-card i { font-size: 24px; margin-bottom: 8px; }
-        .camera-container { margin: 10px 0; text-align: center; }
-        #capturedImage { width: 100%; max-height: 300px; border-radius: 12px; display: none; object-fit: cover; box-shadow: 0 5px 15px rgba(0,0,0,0.1); margin-bottom: 12px; }
-        #retakeBtn { display: none; }
-        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 9999; }
-        .loading-spinner { text-align: center; color: white; }
-        .spinner-border { width: 60px; height: 60px; border-width: 4px; }
-        .info-box { background: #f7fafc; border-left: 4px solid #667eea; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
-        .info-box i { color: #667eea; margin-right: 8px; }
-        .info-box p { margin: 0; font-size: 13px; color: #4a5568; }
-        .filter-section { margin-bottom: 20px; }
-        .filter-title { font-size: 18px; font-weight: 600; color: #2d3748; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-        .filter-title i { color: #667eea; }
-        .results-info { background: #f7fafc; border-radius: 12px; padding: 15px 20px; margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between; }
-        .results-info i { color: #667eea; margin-right: 8px; }
-        .card { border: none; border-radius: 15px; overflow: hidden; transition: all 0.3s; box-shadow: 0 5px 20px rgba(0,0,0,0.08); background: white; margin-bottom: 20px; cursor: pointer; }
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
-        .person-card .card-body { padding: 25px; }
-        .person-card .card-title { font-size: 20px; font-weight: 600; color: #2d3748; margin-bottom: 15px; }
-        .person-card .stats-row { display: flex; gap: 20px; margin-top: 15px; }
-        .person-card .stat-item { flex: 1; text-align: center; padding: 12px; background: #f7fafc; border-radius: 10px; }
-        .person-card .stat-number { font-size: 24px; font-weight: 700; color: #0099cc; display: block; }
-        .person-card .stat-label { font-size: 12px; color: #718096; margin-top: 5px; }
-        .person-card .view-details { margin-top: 15px; text-align: center; color: #0099cc; font-weight: 500; }
-        .thumbnail-container { position: relative; height: 200px; background: #0099cc; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .thumbnail-img { width: 100%; height: 100%; object-fit: cover; transition: all 0.3s; }
-        .thumbnail-container:hover .thumbnail-img { transform: scale(1.05); }
-        .no-image { font-size: 60px; color: rgba(255,255,255,0.5); }
-        .card-body { padding: 20px; }
-        .empty-state { text-align: center; padding: 60px 20px; color: #718096; }
-        .empty-state i { font-size: 80px; color: #cbd5e0; margin-bottom: 20px; }
-        .empty-state h4 { color: #2d3748; margin-bottom: 10px; }
-        .animate-in { animation: fadeInUp 0.5s ease-out forwards; opacity: 0; }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        .password-lock { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; padding: 40px; }
-        .password-lock-icon { font-size: 80px; color: #667eea; margin-bottom: 30px; animation: pulse 2s infinite; }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        .password-form { width: 100%; max-width: 400px; }
-        .password-title { font-size: 24px; font-weight: 600; color: #2d3748; margin-bottom: 10px; text-align: center; }
-        .password-subtitle { font-size: 14px; color: #718096; margin-bottom: 30px; text-align: center; }
-        .password-input-group { position: relative; margin-bottom: 20px; }
-        .password-input-group i { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #667eea; font-size: 18px; }
-        .password-input { width: 100%; padding: 15px 15px 15px 50px; border: 2px solid #e2e8f0; border-radius: 12px; font-size: 16px; transition: all 0.3s; }
-        .password-input:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-        .password-error { color: #e53e3e; font-size: 13px; margin-top: 10px; display: none; text-align: center; }
-        .password-error.show { display: block; animation: shake 0.5s; }
-        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
-        .modal-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px 15px 0 0; }
-        .modal-content { border-radius: 15px; border: none; }
-        .modal-title { font-weight: 600; }
-        .timeline { position: relative; padding-left: 30px; }
-        .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: #e2e8f0; }
-        .timeline-item { position: relative; margin-bottom: 25px; padding: 15px; background: #f7fafc; border-radius: 10px; border-left: 3px solid #0099cc; }
-        .timeline-item::before { content: ''; position: absolute; left: -23px; top: 20px; width: 12px; height: 12px; border-radius: 50%; background: #0099cc; border: 3px solid white; box-shadow: 0 0 0 2px #0099cc; }
-        .timeline-item.checkin::before { background: #28a745; box-shadow: 0 0 0 2px #28a745; }
-        .timeline-item.checkout::before { background: #007bff; box-shadow: 0 0 0 2px #007bff; }
-        .timeline-date { font-size: 12px; color: #718096; margin-bottom: 5px; }
-        .timeline-type { font-weight: 600; color: #2d3748; margin-bottom: 8px; }
-        .timeline-image { margin-top: 10px; }
-        .timeline-image img { max-width: 100%; border-radius: 8px; cursor: pointer; transition: all 0.3s; }
-        .timeline-image img:hover { transform: scale(1.02); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-        .btn-outline-primary { border-color: #0099cc; color: #0099cc; }
-        .btn-outline-primary:hover { background-color: #0099cc; border-color: #0099cc; color: white; }
-        @media (max-width: 768px) { .main-header h1 { font-size: 22px; } .custom-tab { padding: 15px 10px; font-size: 14px; } .tab-pane { padding: 20px; } .person-card .stats-row { flex-direction: column; gap: 10px; } }
+        .tab-pane.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .form-label { font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .form-control, .form-select { border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; }
+        .btn-primary { background: #0099cc; border: none; border-radius: 12px; padding: 14px 24px; width: 100%; }
+        .camera-container { text-align: center; margin-bottom: 20px; }
+        #capturedImage { width: 100%; max-height: 300px; border-radius: 12px; display: none; margin-bottom: 12px; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 9999; color: white; }
+        .password-lock { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
+        .person-card { border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); margin-bottom: 20px; cursor: pointer; }
+        .thumbnail-container { height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .thumbnail-img { width: 100%; height: 100%; object-fit: cover; }
+        .timeline-item { padding: 15px; background: #f7fafc; border-left: 3px solid #0099cc; margin-bottom: 15px; }
     </style>
 </head>
 <body>
-    <div class="main-header animate__animated animate__fadeInDown">
-        <h1><i class="fas fa-user-clock me-2"></i>ระบบแสดงตนควบคุมผู้ต้องขังป่วย</h1>
-        <p>ระบบเข้าเวรเรือนจำอำเภอสีคิ้ว - ระบบบันทึกและรายงานเวลาทำงาน</p>
+    <div class="main-header">
+        <h2><i class="fas fa-user-clock"></i> ระบบลงเวลาทำงาน</h2>
     </div>
 
-    <div class="tab-container animate__animated animate__fadeInUp">
+    <div class="tab-container">
         <div class="custom-tabs">
-            <button class="custom-tab active" onclick="switchTab('checkin')">
-                <i class="fas fa-user-check"></i> ลงชื่อเข้า-ออกงาน
-            </button>
-            <button class="custom-tab" onclick="switchTab('report')">
-                <i class="fas fa-chart-line"></i> รายงานข้อมูล
-            </button>
+            <button class="custom-tab active" onclick="switchTab('checkin')">ลงชื่อเข้า-ออกงาน</button>
+            <button class="custom-tab" onclick="switchTab('report')">รายงานข้อมูล</button>
         </div>
 
         <div class="tab-content-wrapper">
             <div id="checkin-tab" class="tab-pane active">
-                <div class="container-fluid" style="max-width: 600px;">
-                    <div id="locationStatus" class="status-card success"></div>
-                    <div class="info-box">
-                        <i class="fas fa-info-circle"></i>
-                        <p>กรุณาอนุญาตการเข้าถึงตำแหน่งและกล้องเพื่อใช้งานระบบ</p>
+                <form id="locationForm">
+                    <label class="form-label">ชื่อ-นามสกุล</label>
+                    <select class="form-select" id="name" required><option value="">-- กำลังโหลดรายชื่อ --</option></select>
+
+                    <label class="form-label">ประเภท</label>
+                    <select class="form-select" id="checkType" required>
+                        <option value="">-- เลือกประเภท --</option>
+                        <option value="เข้างาน">เข้างาน</option>
+                        <option value="ออกงาน">ออกงาน</option>
+                    </select>
+
+                    <label class="form-label">พิกัด</label>
+                    <input type="text" class="form-control" id="yourLocation" readonly placeholder="กดดึงพิกัด">
+                    <input type="hidden" id="latitude"><input type="hidden" id="longitude">
+                    <button type="button" class="btn btn-secondary w-100 mb-3" onclick="getLocation()">ดึงพิกัดปัจจุบัน</button>
+
+                    <label class="form-label">รูปถ่าย</label>
+                    <div class="camera-container">
+                        <img id="capturedImage">
+                        <canvas id="canvas" style="display:none;"></canvas>
+                        <input type="hidden" id="imageData">
+                        <input type="file" id="fileInput" accept="image/*" capture="user" style="display:none;" onchange="handleFileSelect(event)">
+                        <button type="button" class="btn btn-secondary w-100" onclick="document.getElementById('fileInput').click()">ถ่ายภาพ</button>
                     </div>
 
-                    <form id="locationForm">
-                        <div class="form-group">
-                            <label class="form-label"><i class="fas fa-user"></i> ชื่อ-นามสกุล</label>
-                            <select class="form-select" id="name" required>
-                                <option value="">-- เลือกชื่อของคุณ --</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"><i class="fas fa-clipboard-check"></i> ประเภทการลงเวลา</label>
-                            <select class="form-select" id="checkType" required>
-                                <option value="">-- เลือกประเภท --</option>
-                                <option value="เข้างาน">เข้างาน</option>
-                                <option value="ออกงาน">ออกงาน</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"><i class="fas fa-map-marker-alt"></i> พิกัดตำแหน่ง</label>
-                            <input type="text" class="form-control" id="yourLocation" readonly placeholder="กดดึงพิกัดด้านล่าง">
-                            <input type="hidden" id="latitude">
-                            <input type="hidden" id="longitude">
-                            <button type="button" class="btn btn-secondary w-100 mt-2" onclick="getLocation()">
-                                <i class="fas fa-crosshairs me-2"></i>ดึงพิกัดปัจจุบัน
-                            </button>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label"><i class="fas fa-camera"></i> ถ่ายภาพ</label>
-                            <div class="camera-container">
-                                <img id="capturedImage" alt="Captured">
-                                <canvas id="canvas" style="display:none;"></canvas>
-                                <input type="hidden" id="imageData">
-                                <input type="file" id="fileInput" accept="image/*" capture="user" style="display:none;" onchange="handleFileSelect(event)">
-                                <button type="button" class="btn btn-secondary w-100" onclick="document.getElementById('fileInput').click()">
-                                    <i class="fas fa-camera me-2"></i>ถ่ายภาพ 
-                                </button>
-                                <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="retakeBtn" onclick="retakeImage()">
-                                    <i class="fas fa-redo me-2"></i>ถ่ายใหม่
-                                </button>
-                            </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary" id="submitButton">
-                            <i class="fas fa-paper-plane me-2"></i>บันทึกข้อมูล
-                        </button>
-                    </form>
-                </div>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">บันทึกข้อมูล</button>
+                </form>
             </div>
 
             <div id="report-tab" class="tab-pane">
                 <div id="passwordLockScreen" class="password-lock">
-                    <i class="fas fa-lock password-lock-icon"></i>
-                    <div class="password-form">
-                        <h3 class="password-title">กรุณาใส่รหัสผ่าน</h3>
-                        <p class="password-subtitle">เพื่อเข้าถึงข้อมูลรายงาน</p>
-                        <form id="passwordForm" onsubmit="verifyPassword(event)">
-                            <div class="password-input-group">
-                                <i class="fas fa-key"></i>
-                                <input type="password" id="passwordInput" class="password-input" placeholder="ใส่รหัสผ่าน" autocomplete="off" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-unlock me-2"></i>ปลดล็อค
-                            </button>
-                            <div id="passwordError" class="password-error">
-                                <i class="fas fa-exclamation-circle me-1"></i> รหัสผ่านไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง
-                            </div>
-                        </form>
-                    </div>
+                    <h3>ใส่รหัสผ่าน (2550)</h3>
+                    <input type="password" id="passwordInput" class="form-control" style="max-width: 300px;">
+                    <button class="btn btn-primary" style="max-width: 300px;" onclick="verifyPassword()">ปลดล็อค</button>
                 </div>
 
                 <div id="reportContent" style="display: none;">
-                    <div class="container-fluid">
-                        <div class="filter-section">
-                            <div class="filter-title"><i class="fas fa-filter"></i> ค้นหาและกรองข้อมูล</div>
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="form-label"><i class="fas fa-search me-1"></i>ค้นหาชื่อ</label>
-                                    <input type="text" class="form-control" id="searchBox" placeholder="พิมพ์ชื่อที่ต้องการค้นหา..." oninput="filterData()">
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label"><i class="fas fa-clipboard-check me-1"></i>ประเภท</label>
-                                    <select class="form-select" id="agencyFilter" onchange="filterData()">
-                                        <option value="">-- ทั้งหมด --</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="form-label"><i class="fas fa-calendar me-1"></i>วันที่</label>
-                                    <input type="date" class="form-control" id="dateFilter" onchange="filterData()">
-                                </div>
-                            </div>
-                            <div class="row mt-3">
-                                <div class="col-12 d-flex gap-2 flex-wrap">
-                                    <button class="btn btn-success" onclick="refreshData()"><i class="fas fa-sync-alt me-1"></i>รีเฟรชข้อมูล</button>
-                                    <button class="btn btn-secondary" onclick="clearAllFilters()"><i class="fas fa-undo me-1"></i>ล้างการค้นหา</button>
-                                    <button class="btn btn-primary" id="pdfReportBtn" onclick="generatePDFReport()" disabled><i class="fas fa-file-pdf me-1"></i>สร้างรายงาน PDF</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="results-info">
-                            <div id="resultsCount"><i class="fas fa-list"></i> <strong>กำลังโหลดข้อมูล...</strong></div>
-                        </div>
-
-                        <div class="row" id="dataContainer">
-                            <div class="col-12 text-center py-5">
-                                <div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div>
-                                <p class="mt-3">กำลังโหลดข้อมูล...</p>
-                            </div>
-                        </div>
-                    </div>
+                    <button class="btn btn-success mb-3" onclick="refreshData()">รีเฟรชข้อมูล</button>
+                    <button class="btn btn-warning mb-3 ms-2" onclick="generatePDF()">สร้าง PDF</button>
+                    <div class="row" id="dataContainer"></div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="detailsModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="modalPersonName"><i class="fas fa-user-circle me-2"></i></h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="modalContent"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>ปิด</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <div class="modal fade" id="detailsModal"><div class="modal-dialog modal-lg"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="modalPersonName">รายละเอียด</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body"><div id="modalContent"></div></div>
+    </div></div></div>
 
-    <div class="loading-overlay" id="loadingOverlay">
-        <div class="loading-spinner">
-            <div class="spinner-border text-light" role="status"></div>
-            <p class="mt-3">กำลังบันทึกข้อมูล...</p>
-        </div>
-    </div>
+    <div class="loading-overlay" id="loadingOverlay"><div><h4>กำลังประมวลผล...</h4></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // 🚨 เอา URL ของ Web App (Deploy ฝั่ง Apps Script) มาใส่ตรงนี้ครับ 🚨
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx6WVUT7w7hGOzYr4TRMfj0C6zeCKCQxeKqP1SUiQ0nAsFQWUXPWLJQcZBgkwmEiXuq/exec';
+        // ======================================
+        // เอา URL จาก Google Apps Script (ตอน Deploy) มาใส่ตรงนี้ครับ 👇
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycby4yYAPOhHRkwfb2zypgmG1OI7HvaTmk_1nzVSw6GC0dCww7ahMn455kZCzoawHygmO/exec'; 
+        // ======================================
 
-        // ฟังก์ชันกลางสำหรับยิง API
         async function callAPI(action, payload = {}) {
-            if (WEB_APP_URL === 'ใส่_URL_WEB_APP_ตรงนี้') {
-                throw new Error("ลืมใส่ URL ของ Web App ในโค้ดครับ!");
-            }
-            const response = await fetch(WEB_APP_URL, {
-                method: 'POST',
-                body: JSON.stringify({ action: action, ...payload })
-            });
-            const result = await response.json();
+            if (WEB_APP_URL === 'วาง_URL_ตรงนี้') throw new Error("ลืมใส่ URL ครับ");
+            const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action, ...payload }) });
+            const result = await res.json();
             if (!result.success) throw new Error(result.error);
             return result.data;
         }
 
-        // ======================================
-        // TAB SWITCHING
-        // ======================================
-        function switchTab(tabName) {
-            document.querySelectorAll('.custom-tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.remove('active'));
-
-            if (tabName === 'checkin') {
-                document.querySelectorAll('.custom-tab')[0].classList.add('active');
-                document.getElementById('checkin-tab').classList.add('active');
-            } else if (tabName === 'report') {
-                document.querySelectorAll('.custom-tab')[1].classList.add('active');
-                document.getElementById('report-tab').classList.add('active');
-
-                if (!isReportUnlocked) {
-                    document.getElementById('passwordLockScreen').style.display = 'flex';
-                    document.getElementById('reportContent').style.display = 'none';
-                    setTimeout(() => document.getElementById('passwordInput').focus(), 100);
-                } else {
-                    document.getElementById('passwordLockScreen').style.display = 'none';
-                    document.getElementById('reportContent').style.display = 'block';
-                }
-            }
-        }
-
-        let reportDataLoaded = false;
-        let isReportUnlocked = false;
-
-        // ======================================
-        // INITIALIZE (โหลดรายชื่อตอนเปิดเว็บ)
-        // ======================================
-        async function loadNames() {
+        // โหลดรายชื่อทันทีที่เปิดเว็บ
+        window.onload = async () => {
             try {
                 const names = await callAPI('getNames');
                 const select = document.getElementById('name');
-                names.forEach(name => {
-                    const option = document.createElement('option');
-                    option.value = name;
-                    option.textContent = name;
-                    select.appendChild(option);
-                });
-            } catch (error) {
-                console.error("โหลดรายชื่อไม่สำเร็จ:", error);
-                Swal.fire({ icon: 'warning', title: 'ดึงรายชื่อไม่สำเร็จ', text: error.message, timer: 3000 });
+                select.innerHTML = '<option value="">-- เลือกชื่อของคุณ --</option>';
+                names.forEach(n => select.innerHTML += `<option value="${n}">${n}</option>`);
+            } catch (e) {
+                Swal.fire('Error', 'ดึงรายชื่อไม่สำเร็จ: ' + e.message, 'error');
             }
+        };
+
+        function switchTab(tab) {
+            document.querySelectorAll('.custom-tab, .tab-pane').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll(tab === 'checkin' ? '.custom-tab:nth-child(1), #checkin-tab' : '.custom-tab:nth-child(2), #report-tab')
+                .forEach(el => el.classList.add('active'));
         }
-        
-        // สั่งให้โหลดชื่อทันทีที่เปิดหน้าเว็บ
-        loadNames();
 
-        // ======================================
-        // PASSWORD VERIFICATION
-        // ======================================
-        async function verifyPassword(event) {
-            event.preventDefault();
-            const passwordInput = document.getElementById('passwordInput');
-            const password = passwordInput.value;
-            const errorDiv = document.getElementById('passwordError');
-
-            const submitBtn = event.target.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>กำลังตรวจสอบ...';
-
+        async function verifyPassword() {
+            const pwd = document.getElementById('passwordInput').value;
             try {
-                const isValid = await callAPI('verifyReportPassword', { password: password });
+                const isValid = await callAPI('verifyReportPassword', { password: pwd });
                 if (isValid) {
-                    isReportUnlocked = true;
                     document.getElementById('passwordLockScreen').style.display = 'none';
                     document.getElementById('reportContent').style.display = 'block';
-
-                    if (!reportDataLoaded) {
-                        loadData();
-                        reportDataLoaded = true;
-                    }
-                    Swal.fire({ icon: 'success', title: 'ปลดล็อคสำเร็จ', text: 'เข้าสู่ระบบรายงานแล้ว', timer: 1500, showConfirmButton: false });
-                } else {
-                    errorDiv.classList.add('show');
-                    passwordInput.value = '';
-                    passwordInput.focus();
-                    setTimeout(() => errorDiv.classList.remove('show'), 3000);
-                }
-            } catch (error) {
-                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message || 'ไม่สามารถตรวจสอบรหัสผ่านได้' });
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = originalText;
-            }
+                    refreshData();
+                } else Swal.fire('ผิดพลาด', 'รหัสผ่านผิด', 'error');
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
         }
 
-        // ======================================
-        // GET LOCATION & CAMERA
-        // ======================================
         function getLocation() {
-            if (!navigator.geolocation) { Swal.fire('เกิดข้อผิดพลาด', 'เบราว์เซอร์ไม่รองรับ GPS', 'error'); return; }
-            Swal.fire({ title: 'กำลังดึงพิกัด...', html: 'กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
             navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const latitude = position.coords.latitude;
-                    const longitude = position.coords.longitude;
-                    document.getElementById('latitude').value = latitude;
-                    document.getElementById('longitude').value = longitude;
-                    document.getElementById('yourLocation').value = latitude + ', ' + longitude;
-
-                    const locationStatus = document.getElementById('locationStatus');
-                    locationStatus.className = 'status-card success';
-                    locationStatus.innerHTML = '<i class="fas fa-check-circle"></i><div>ดึงพิกัดสำเร็จ</div>';
-                    locationStatus.style.display = 'block';
-                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'ดึงพิกัดสำเร็จ', timer: 1500, showConfirmButton: false });
+                pos => {
+                    document.getElementById('latitude').value = pos.coords.latitude;
+                    document.getElementById('longitude').value = pos.coords.longitude;
+                    document.getElementById('yourLocation').value = 'สำเร็จ';
                 },
-                (error) => { Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถดึงพิกัดได้ กรุณาเปิดใช้งาน GPS', 'error'); },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                () => Swal.fire('Error', 'ดึงพิกัดไม่ได้', 'error')
             );
         }
 
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = e => {
                 const img = new Image();
-                img.onload = function() {
+                img.onload = () => {
                     const canvas = document.getElementById('canvas');
-                    let width = img.width, height = img.height;
-                    const maxW = 800, maxH = 600;
-
-                    if (width > height) { if (width > maxW) { height = Math.round(height * (maxW / width)); width = maxW; } } 
-                    else { if (height > maxH) { width = Math.round(width * (maxH / height)); height = maxH; } }
-
-                    canvas.width = width;
-                    canvas.height = height;
-                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    canvas.width = 600; canvas.height = 800; // บีบอัดขนาด
+                    canvas.getContext('2d').drawImage(img, 0, 0, 600, 800);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
                     document.getElementById('imageData').value = dataUrl;
-
-                    const capturedImage = document.getElementById('capturedImage');
-                    capturedImage.src = dataUrl;
-                    capturedImage.style.display = 'block';
-                    document.getElementById('retakeBtn').style.display = 'block';
-                    Swal.fire({ icon: 'success', title: 'สำเร็จ', text: 'เลือกภาพเรียบร้อยแล้ว', timer: 1500, showConfirmButton: false });
+                    document.getElementById('capturedImage').src = dataUrl;
+                    document.getElementById('capturedImage').style.display = 'block';
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        function retakeImage() {
-            document.getElementById('imageData').value = '';
-            document.getElementById('capturedImage').style.display = 'none';
-            document.getElementById('retakeBtn').style.display = 'none';
-            document.getElementById('fileInput').value = '';
-            document.getElementById('fileInput').click();
-        }
+        document.getElementById('locationForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                name: document.getElementById('name').value,
+                checkType: document.getElementById('checkType').value,
+                latitude: document.getElementById('latitude').value,
+                longitude: document.getElementById('longitude').value,
+                imageUrl: document.getElementById('imageData').value
+            };
+            
+            if (!data.latitude) return Swal.fire('Error', 'ดึงพิกัดก่อนครับ', 'warning');
+            if (!data.imageUrl) return Swal.fire('Error', 'ถ่ายรูปก่อนครับ', 'warning');
 
-        function showLoading() { document.getElementById('loadingOverlay').style.display = 'flex'; document.getElementById('submitButton').disabled = true; }
-        function hideLoading() { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('submitButton').disabled = false; }
-
-        // ======================================
-        // FORM SUBMIT (บันทึกเข้างาน/ออกงาน)
-        // ======================================
-        document.getElementById('locationForm').addEventListener('submit', async (event) => {
-            event.preventDefault();
-
-            const name = document.getElementById('name').value;
-            const checkType = document.getElementById('checkType').value;
-            const latitude = parseFloat(document.getElementById('latitude').value);
-            const longitude = parseFloat(document.getElementById('longitude').value);
-            const imageData = document.getElementById('imageData').value;
-
-            if (!name) { Swal.fire('ข้อผิดพลาด', 'กรุณาเลือกชื่อ-นามสกุล', 'error'); return; }
-            if (!checkType) { Swal.fire('ข้อผิดพลาด', 'กรุณาเลือกประเภทการลงเวลา', 'error'); return; }
-            if (!latitude || !longitude) { Swal.fire('ข้อผิดพลาด', 'กรุณาดึงพิกัดก่อนบันทึก', 'error'); return; }
-            if (!imageData) { Swal.fire('ข้อผิดพลาด', 'กรุณาถ่ายภาพก่อนบันทึก', 'error'); return; }
-
-            showLoading();
-
+            document.getElementById('loadingOverlay').style.display = 'flex';
             try {
-                // 1. อัพโหลดรูปก่อน
-                const imageUrl = await callAPI('uploadImage', { base64Data: imageData.split(',')[1] });
-
-                // 2. ส่งข้อมูลบันทึกลงชีต
-                const result = await callAPI('saveData', {
-                    data: { name, checkType, latitude, longitude, imageUrl }
-                });
-
-                // แจ้งเตือนสำเร็จ
-                if (checkType === 'เข้างาน') {
-                    Swal.fire({ title: 'บันทึกสำเร็จ', html: 'คุณได้เลือก <strong>' + checkType + '</strong><br>เวลาที่ดำเนินการ: <strong>' + result.timestamp + '</strong>', icon: 'success' });
-                } else {
-                    Swal.fire({ title: 'บันทึกสำเร็จ', html: 'คุณได้เลือก <strong>' + checkType + '</strong><br>ตรวจพบการเข้างานของ <strong>' + name + '</strong><br>เวลาที่เข้างาน: <strong>' + result.checkInTime + '</strong><br>เวลาที่ออกงาน: <strong>' + result.timestamp + '</strong><br>คุณใช้เวลาทำงาน: <strong>' + result.workTime + '</strong>', icon: 'success' });
-                }
-
-                // รีเซ็ตฟอร์ม
-                document.getElementById('locationForm').reset();
-                document.getElementById('yourLocation').value = '';
-                document.getElementById('imageData').value = '';
-                document.getElementById('capturedImage').style.display = 'none';
-                document.getElementById('retakeBtn').style.display = 'none';
-                document.getElementById('fileInput').value = '';
-                document.getElementById('locationStatus').style.display = 'none';
-                if (reportDataLoaded) reportDataLoaded = false;
-
-            } catch (error) {
-                Swal.fire('เกิดข้อผิดพลาด', error.message || 'ไม่สามารถบันทึกข้อมูลได้', 'error');
+                const imgUrl = await callAPI('uploadImage', { base64Data: data.imageUrl.split(',')[1] });
+                data.imageUrl = imgUrl;
+                const res = await callAPI('saveData', { data });
+                Swal.fire('สำเร็จ', res.message, 'success');
+                e.target.reset(); document.getElementById('capturedImage').style.display = 'none';
+            } catch (err) {
+                Swal.fire('ผิดพลาด', err.message, 'error');
             } finally {
-                hideLoading();
+                document.getElementById('loadingOverlay').style.display = 'none';
             }
-        });
+        };
 
-        // ======================================
-        // REPORT SYSTEM
-        // ======================================
         let allData = [];
-        let filteredDataGlobal = [];
-        let animationDelay = 0;
-        let personDataMap = {};
-
-        async function loadData() {
-            try {
-                const data = await callAPI('getData');
-                allData = data.rows;
-                const agencyFilter = document.getElementById('agencyFilter');
-                agencyFilter.innerHTML = '<option value="">-- ทั้งหมด --</option>';
-                data.uniqueEValues.forEach(val => {
-                    const option = document.createElement('option');
-                    option.value = val;
-                    option.textContent = val;
-                    agencyFilter.appendChild(option);
-                });
-
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('dateFilter').value = today;
-                filterData();
-            } catch (error) {
-                console.error("โหลดข้อมูลรายงานไม่สำเร็จ:", error);
-            }
-        }
-
         async function refreshData() {
-            Swal.fire({ title: 'กำลังรีเฟรชข้อมูล...', html: 'กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            document.getElementById('dataContainer').innerHTML = 'กำลังโหลด...';
             try {
                 const data = await callAPI('getData');
                 allData = data.rows;
-                const agencyFilter = document.getElementById('agencyFilter');
-                const currentVal = agencyFilter.value;
-                agencyFilter.innerHTML = '<option value="">-- ทั้งหมด --</option>';
-                data.uniqueEValues.forEach(val => {
-                    const option = document.createElement('option');
-                    option.value = val;
-                    option.textContent = val;
-                    agencyFilter.appendChild(option);
+                let html = '';
+                allData.forEach(row => {
+                    html += `<div class="col-md-4"><div class="card person-card" onclick="showModal('${row[1]}')">
+                        <div class="thumbnail-container"><img src="${row[5]}" class="thumbnail-img"></div>
+                        <div class="card-body"><h5>${row[1]}</h5><p>${row[2]} - ${row[0]}</p></div>
+                    </div></div>`;
                 });
-                agencyFilter.value = currentVal;
-                filterData();
-                Swal.fire({ icon: 'success', title: 'รีเฟรชสำเร็จ', text: 'ข้อมูลได้รับการอัพเดทแล้ว', timer: 1500, showConfirmButton: false });
-            } catch (error) {
-                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message || 'ไม่สามารถรีเฟรชข้อมูลได้' });
-            }
+                document.getElementById('dataContainer').innerHTML = html;
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
         }
 
-        function displayData(rows) {
-            const container = document.getElementById('dataContainer');
-            container.innerHTML = '';
-            animationDelay = 0;
-            filteredDataGlobal = rows;
-
-            if (!rows || rows.length === 0) {
-                container.innerHTML = '<div class="col-12 empty-state"><i class="fas fa-inbox"></i><h4 class="mb-2">ไม่พบข้อมูลที่ตรงกัน</h4><p class="text-muted">ลองเปลี่ยนเงื่อนไขการค้นหาของคุณ</p><button class="btn btn-outline-primary mt-2" onclick="clearAllFilters()"><i class="fas fa-undo me-1"></i> ล้างการค้นหา</button></div>';
-                return;
-            }
-
-            personDataMap = {};
-            rows.forEach(row => {
-                const name = row[1] || 'ไม่มีชื่อ';
-                if (!personDataMap[name]) personDataMap[name] = [];
-                personDataMap[name].push(row);
+        function showModal(name) {
+            document.getElementById('modalPersonName').innerText = name;
+            let html = '';
+            allData.filter(r => r[1] === name).forEach(row => {
+                html += `<div class="timeline-item">
+                    <b>${row[2]}</b><br>${row[0]}<br>
+                    <a href="https://www.google.com/maps/search/?api=1&query=${row[8]},${row[9]}" target="_blank">เปิดแผนที่</a>
+                </div>`;
             });
-
-            Object.keys(personDataMap).sort().forEach(name => {
-                const personRecords = personDataMap[name];
-                const checkInCount = personRecords.filter(r => r[2] === 'เข้างาน').length;
-                const checkOutCount = personRecords.filter(r => r[2] === 'ออกงาน').length;
-                const imageUrl = personRecords[0][5] || null;
-
-                const col = document.createElement('div');
-                col.className = 'col-sm-6 col-lg-4 col-xl-3 mb-4 animate-in';
-                col.style.animationDelay = animationDelay + 'ms';
-                animationDelay += 100;
-
-                const thumbHtml = imageUrl ? '<div class="thumbnail-container"><img src="' + imageUrl + '" alt="ภาพ" class="thumbnail-img" loading="lazy"></div>' : '<div class="thumbnail-container"><i class="fas fa-user no-image"></i></div>';
-
-                col.innerHTML = '<div class="card h-100 person-card" onclick="showPersonDetails(\'' + name.replace(/'/g, "\\'") + '\')">' + thumbHtml + '<div class="card-body"><h5 class="card-title"><i class="fas fa-user-circle me-2"></i>' + name + '</h5><div class="stats-row"><div class="stat-item"><span class="stat-number">' + checkInCount + '</span><div class="stat-label"><i class="fas fa-sign-in-alt me-1"></i>เข้างาน</div></div><div class="stat-item"><span class="stat-number">' + checkOutCount + '</span><div class="stat-label"><i class="fas fa-sign-out-alt me-1"></i>ออกงาน</div></div><div class="stat-item"><span class="stat-number">' + personRecords.length + '</span><div class="stat-label"><i class="fas fa-list me-1"></i>ทั้งหมด</div></div></div><div class="view-details"><i class="fas fa-info-circle me-1"></i>คลิกเพื่อดูรายละเอียด</div></div></div>';
-                container.appendChild(col);
-            });
-        }
-
-        function showPersonDetails(name) {
-            const personRecords = personDataMap[name];
-            if (!personRecords || personRecords.length === 0) return;
-            document.getElementById('modalPersonName').innerHTML = '<i class="fas fa-user-circle me-2"></i>' + name;
-            let timelineHTML = '<div class="timeline">';
-
-            personRecords.forEach(record => {
-                const dateTime = record[0] || 'ไม่ระบุวันที่';
-                const checkType = record[2] || 'ไม่ระบุ';
-                const fileUrl = record[4] || null;
-                const imageUrl = record[5] || null;
-                const workSummary = record[7] || '';
-                const latitude = record[8] || '';
-                const longitude = record[9] || '';
-                const typeClass = checkType === 'เข้างาน' ? 'checkin' : checkType === 'ออกงาน' ? 'checkout' : '';
-                const iconClass = checkType === 'เข้างาน' ? 'sign-in-alt' : 'sign-out-alt';
-                const imageSection = imageUrl ? '<div class="timeline-image"><img src="' + imageUrl + '" alt="ภาพ"' + (fileUrl ? ' onclick="window.open(\'' + fileUrl + '\', \'_blank\')"' : '') + ' loading="lazy"></div>' : '';
-                const workSection = workSummary ? '<div class="mt-2"><strong><i class="fas fa-clock me-1"></i>เวลาทำงาน:</strong> ' + workSummary + '</div>' : '';
-                // 🚨 แก้ไขลิงก์ Google Maps ให้ถูกต้องตามที่แนะนำไปก่อนหน้านี้
-                const locationSection = (latitude && longitude) ? '<div class="mt-2"><strong><i class="fas fa-map-marker-alt me-1"></i>พิกัด:</strong><a href="https://maps.google.com/?q=' + latitude + ',' + longitude + '" target="_blank" class="btn btn-sm btn-outline-primary ms-2"><i class="fas fa-map-marked-alt me-1"></i>เปิดใน Google Maps</a></div>' : '';
-
-                timelineHTML += '<div class="timeline-item ' + typeClass + '"><div class="timeline-date"><i class="far fa-calendar-alt me-1"></i>' + dateTime + '</div><div class="timeline-type"><i class="fas fa-' + iconClass + ' me-1"></i>' + checkType + '</div>' + workSection + locationSection + imageSection + '</div>';
-            });
-
-            timelineHTML += '</div>';
-            document.getElementById('modalContent').innerHTML = timelineHTML;
+            document.getElementById('modalContent').innerHTML = html;
             new bootstrap.Modal(document.getElementById('detailsModal')).show();
         }
 
-        function filterData() {
-            const searchTerm = document.getElementById('searchBox').value.toLowerCase().trim();
-            const selectedAgency = document.getElementById('agencyFilter').value;
-            const selectedDate = document.getElementById('dateFilter').value;
-
-            const filtered = allData.filter(row => {
-                const title = (row[1] || '').toLowerCase();
-                const agency = row[2] || '';
-                const isoDate = row[6] || '';
-                return title.includes(searchTerm) && (!selectedAgency || agency === selectedAgency) && (!selectedDate || isoDate === selectedDate);
-            });
-
-            displayData(filtered);
-            updateResultsCount(filtered.length);
-            updatePDFButtonState();
-        }
-
-        function updateResultsCount(filteredCount) {
-            const countEl = document.getElementById('resultsCount');
-            if (!countEl) return;
-            const uniquePeople = new Set(filteredDataGlobal.map(row => row[1] || 'ไม่มีชื่อ'));
-            const isFiltered = document.getElementById('searchBox').value || document.getElementById('agencyFilter').value || document.getElementById('dateFilter').value;
-            if (!isFiltered && allData.length === filteredCount) {
-                countEl.innerHTML = '<i class="fas fa-list"></i> <strong>แสดงข้อมูล ' + uniquePeople.size + ' คน จากทั้งหมด ' + allData.length + ' รายการ</strong>';
-            } else {
-                countEl.innerHTML = '<i class="fas fa-list"></i> <strong>พบข้อมูล ' + uniquePeople.size + ' คน (' + filteredCount + ' รายการ) จากทั้งหมด ' + allData.length + ' รายการ</strong>';
-            }
-        }
-
-        function clearAllFilters() {
-            document.getElementById('searchBox').value = '';
-            document.getElementById('agencyFilter').value = '';
-            document.getElementById('dateFilter').value = '';
-            filterData();
-        }
-
-        function updatePDFButtonState() {
-            const hasFilter = document.getElementById('searchBox').value.trim() !== '' || document.getElementById('agencyFilter').value !== '' || document.getElementById('dateFilter').value !== '';
-            document.getElementById('pdfReportBtn').disabled = !hasFilter;
-        }
-
-        async function generatePDFReport() {
-            const searchTerm = document.getElementById('searchBox').value.trim();
-            const agency = document.getElementById('agencyFilter').value;
-            const date = document.getElementById('dateFilter').value;
-
-            if (!searchTerm && !agency && !date) {
-                Swal.fire({ icon: 'warning', title: 'กรุณากรองข้อมูล', text: 'กรุณากรองข้อมูลอย่างน้อย 1 เงื่อนไขก่อนสร้างรายงาน PDF' });
-                return;
-            }
-
-            Swal.fire({ title: 'กำลังสร้างรายงาน PDF...', html: 'กรุณารอสักครู่', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
+        async function generatePDF() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
             try {
-                const result = await callAPI('generateReport', { filteredData: filteredDataGlobal, filterOptions: { searchTerm, agency, date } });
-                Swal.close();
-                if (result.success) {
-                    Swal.fire({ icon: 'success', title: 'สร้างรายงาน PDF สำเร็จ', html: '<p>ชื่อไฟล์: ' + result.fileName + '</p><a href="' + result.pdfUrl + '" target="_blank" class="btn btn-primary mt-2"><i class="fas fa-download me-1"></i> เปิดไฟล์ PDF</a>', confirmButtonText: 'ปิด' });
-                }
-            } catch (error) {
-                Swal.close();
-                Swal.fire({ icon: 'error', title: 'เกิดข้อผิดพลาด', text: error.message || 'ไม่สามารถสร้างรายงานได้' });
-            }
+                const res = await callAPI('generateReport', { filteredData: allData });
+                Swal.fire('สำเร็จ', `<a href="${res.pdfUrl}" target="_blank">ดาวน์โหลด PDF</a>`, 'success');
+            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+            finally { document.getElementById('loadingOverlay').style.display = 'none'; }
         }
     </script>
 </body>
