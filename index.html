@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบลงชื่อเข้า-ออกงาน</title>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
@@ -11,127 +12,161 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        * { font-family: 'Prompt', sans-serif; box-sizing: border-box; }
+        * { font-family: 'Prompt', sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
         body { background: #0099cc; min-height: 100vh; padding: 20px; }
-        .main-header { background: white; border-radius: 20px; padding: 20px 30px; margin-bottom: 20px; text-align: center; }
-        .tab-container { background: white; border-radius: 20px; overflow: hidden; }
+        .main-header { background: white; border-radius: 20px; padding: 20px 30px; margin-bottom: 20px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); text-align: center; }
+        .main-header h1 { font-size: 28px; font-weight: 700; color: #2d3748; margin-bottom: 5px; }
+        .main-header p { font-size: 14px; color: #718096; margin: 0; }
+        .tab-container { background: white; border-radius: 20px 20px 0 0; padding: 0; box-shadow: 0 10px 40px rgba(0,0,0,0.1); overflow: hidden; }
         .custom-tabs { display: flex; background: #f7fafc; border-bottom: 2px solid #e2e8f0; }
-        .custom-tab { flex: 1; padding: 20px; text-align: center; cursor: pointer; border: none; background: transparent; font-weight: 500; color: #718096; }
-        .custom-tab.active { color: #0099cc; background: white; border-bottom: 3px solid #0099cc; }
-        .tab-content-wrapper { background: white; min-height: 500px; }
+        .custom-tab { flex: 1; padding: 20px; text-align: center; cursor: pointer; border: none; background: transparent; font-size: 16px; font-weight: 500; color: #718096; transition: all 0.3s; position: relative; }
+        .custom-tab.active { color: #667eea; background: white; }
+        .custom-tab.active::after { content: ''; position: absolute; bottom: -2px; left: 0; right: 0; height: 3px; background: #0099cc; }
+        .tab-content-wrapper { background: white; border-radius: 0 0 20px 20px; min-height: 500px; }
         .tab-pane { display: none; padding: 30px; }
-        .tab-pane.active { display: block; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .form-label { font-weight: 500; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-        .form-control, .form-select { border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; }
-        .btn-primary { background: #0099cc; border: none; border-radius: 12px; padding: 14px 24px; width: 100%; }
-        .camera-container { text-align: center; margin-bottom: 20px; }
-        #capturedImage { width: 100%; max-height: 300px; border-radius: 12px; display: none; margin-bottom: 12px; }
+        .tab-pane.active { display: block; animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .form-label { font-weight: 500; color: #2d3748; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+        .form-control, .form-select { border: 2px solid #e2e8f0; border-radius: 12px; padding: 12px 16px; font-size: 14px; transition: all 0.3s; }
+        .btn-primary { background: #0099cc; border: none; border-radius: 12px; padding: 14px 24px; font-weight: 500; width: 100%; box-shadow: 0 5px 15px rgba(102,126,234,0.3); }
+        .status-card { background: #0099cc; border-radius: 12px; padding: 15px; margin-bottom: 20px; color: white; text-align: center; display: none; }
+        .camera-container { margin: 10px 0; text-align: center; }
+        #capturedImage { width: 100%; max-height: 300px; border-radius: 12px; display: none; object-fit: cover; margin-bottom: 12px; }
         .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 9999; color: white; }
-        .password-lock { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; }
-        .person-card { border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.08); margin-bottom: 20px; cursor: pointer; }
-        .thumbnail-container { height: 200px; background: #eee; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .password-lock { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 400px; padding: 40px; }
+        .password-input { width: 100%; padding: 15px; border: 2px solid #e2e8f0; border-radius: 12px; margin-bottom: 20px; }
+        .person-card { border: none; border-radius: 15px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.08); margin-bottom: 20px; cursor: pointer; }
+        .thumbnail-container { height: 200px; background: #0099cc; display: flex; align-items: center; justify-content: center; overflow: hidden; }
         .thumbnail-img { width: 100%; height: 100%; object-fit: cover; }
-        .timeline-item { padding: 15px; background: #f7fafc; border-left: 3px solid #0099cc; margin-bottom: 15px; }
+        .timeline-item { position: relative; margin-bottom: 25px; padding: 15px; background: #f7fafc; border-radius: 10px; border-left: 3px solid #0099cc; }
     </style>
 </head>
 <body>
-    <div class="main-header">
-        <h2><i class="fas fa-user-clock"></i> ระบบลงเวลาทำงาน</h2>
+    <div class="main-header animate__animated animate__fadeInDown">
+        <h1><i class="fas fa-user-clock me-2"></i>ระบบแสดงตนควบคุมผู้ต้องขังป่วย</h1>
+        <p>ระบบเข้าเวรเรือนจำอำเภอสีคิ้ว - ระบบบันทึกและรายงานเวลาทำงาน</p>
     </div>
 
-    <div class="tab-container">
+    <div class="tab-container animate__animated animate__fadeInUp">
         <div class="custom-tabs">
-            <button class="custom-tab active" onclick="switchTab('checkin')">ลงชื่อเข้า-ออกงาน</button>
-            <button class="custom-tab" onclick="switchTab('report')">รายงานข้อมูล</button>
+            <button class="custom-tab active" onclick="switchTab('checkin')">
+                <i class="fas fa-user-check"></i> ลงชื่อเข้า-ออกงาน
+            </button>
+            <button class="custom-tab" onclick="switchTab('report')">
+                <i class="fas fa-chart-line"></i> รายงานข้อมูล
+            </button>
         </div>
 
         <div class="tab-content-wrapper">
             <div id="checkin-tab" class="tab-pane active">
-                <form id="locationForm">
-                    <label class="form-label">ชื่อ-นามสกุล</label>
-                    <select class="form-select" id="name" required><option value="">-- กำลังโหลดรายชื่อ --</option></select>
-
-                    <label class="form-label">ประเภท</label>
-                    <select class="form-select" id="checkType" required>
-                        <option value="">-- เลือกประเภท --</option>
-                        <option value="เข้างาน">เข้างาน</option>
-                        <option value="ออกงาน">ออกงาน</option>
-                    </select>
-
-                    <label class="form-label">พิกัด</label>
-                    <input type="text" class="form-control" id="yourLocation" readonly placeholder="กดดึงพิกัด">
-                    <input type="hidden" id="latitude"><input type="hidden" id="longitude">
-                    <button type="button" class="btn btn-secondary w-100 mb-3" onclick="getLocation()">ดึงพิกัดปัจจุบัน</button>
-
-                    <label class="form-label">รูปถ่าย</label>
-                    <div class="camera-container">
-                        <img id="capturedImage">
-                        <canvas id="canvas" style="display:none;"></canvas>
-                        <input type="hidden" id="imageData">
-                        <input type="file" id="fileInput" accept="image/*" capture="user" style="display:none;" onchange="handleFileSelect(event)">
-                        <button type="button" class="btn btn-secondary w-100" onclick="document.getElementById('fileInput').click()">ถ่ายภาพ</button>
-                    </div>
-
-                    <button type="submit" class="btn btn-primary" id="submitBtn">บันทึกข้อมูล</button>
-                </form>
+                <div class="container-fluid" style="max-width: 600px;">
+                    <div id="locationStatus" class="status-card"></div>
+                    <form id="locationForm">
+                        <div class="form-group mb-3">
+                            <label class="form-label"><i class="fas fa-user"></i> ชื่อ-นามสกุล</label>
+                            <select class="form-select" id="name" required><option value="">-- กำลังโหลดรายชื่อ --</option></select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-label"><i class="fas fa-clipboard-check"></i> ประเภทการลงเวลา</label>
+                            <select class="form-select" id="checkType" required>
+                                <option value="">-- เลือกประเภท --</option>
+                                <option value="เข้างาน">เข้างาน</option>
+                                <option value="ออกงาน">ออกงาน</option>
+                            </select>
+                        </div>
+                        <div class="form-group mb-3">
+                            <label class="form-label"><i class="fas fa-map-marker-alt"></i> พิกัดตำแหน่ง</label>
+                            <input type="text" class="form-control" id="yourLocation" readonly placeholder="กดดึงพิกัดด้านล่าง">
+                            <input type="hidden" id="latitude"><input type="hidden" id="longitude">
+                            <button type="button" class="btn btn-secondary w-100 mt-2" onclick="getLocation()">ดึงพิกัดปัจจุบัน</button>
+                        </div>
+                        <div class="form-group mb-4">
+                            <label class="form-label"><i class="fas fa-camera"></i> ถ่ายภาพ</label>
+                            <div class="camera-container">
+                                <img id="capturedImage">
+                                <canvas id="canvas" style="display:none;"></canvas>
+                                <input type="hidden" id="imageData">
+                                <input type="file" id="fileInput" accept="image/*" capture="user" style="display:none;" onchange="handleFileSelect(event)">
+                                <button type="button" class="btn btn-secondary w-100" onclick="document.getElementById('fileInput').click()">ถ่ายภาพ</button>
+                                <button type="button" class="btn btn-outline-secondary w-100 mt-2" id="retakeBtn" style="display:none;" onclick="retakeImage()">ถ่ายใหม่</button>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="submitButton">บันทึกข้อมูล</button>
+                    </form>
+                </div>
             </div>
 
             <div id="report-tab" class="tab-pane">
                 <div id="passwordLockScreen" class="password-lock">
-                    <h3>ใส่รหัสผ่าน (2550)</h3>
-                    <input type="password" id="passwordInput" class="form-control" style="max-width: 300px;">
-                    <button class="btn btn-primary" style="max-width: 300px;" onclick="verifyPassword()">ปลดล็อค</button>
+                    <i class="fas fa-lock fa-3x mb-3" style="color:#0099cc"></i>
+                    <h3>กรุณาใส่รหัสผ่าน</h3>
+                    <input type="password" id="passwordInput" class="password-input" placeholder="ใส่รหัสผ่าน">
+                    <button class="btn btn-primary" onclick="verifyPassword()">ปลดล็อครายงาน</button>
                 </div>
 
                 <div id="reportContent" style="display: none;">
-                    <button class="btn btn-success mb-3" onclick="refreshData()">รีเฟรชข้อมูล</button>
-                    <button class="btn btn-warning mb-3 ms-2" onclick="generatePDF()">สร้าง PDF</button>
-                    <div class="row" id="dataContainer"></div>
+                    <div class="container-fluid">
+                        <div class="d-flex gap-2 mb-4">
+                            <button class="btn btn-success" onclick="refreshData()"><i class="fas fa-sync-alt"></i> รีเฟรช</button>
+                            <button class="btn btn-warning" onclick="generatePDF()"><i class="fas fa-file-pdf"></i> สร้าง PDF</button>
+                        </div>
+                        <div class="row" id="dataContainer"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="detailsModal"><div class="modal-dialog modal-lg"><div class="modal-content">
-        <div class="modal-header"><h5 class="modal-title" id="modalPersonName">รายละเอียด</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
-        <div class="modal-body"><div id="modalContent"></div></div>
-    </div></div></div>
+    <div class="modal fade" id="detailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg"><div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalPersonName">รายละเอียด</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body"><div id="modalContent"></div></div>
+        </div></div>
+    </div>
 
-    <div class="loading-overlay" id="loadingOverlay"><div><h4>กำลังประมวลผล...</h4></div></div>
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center"><div class="spinner-border mb-3"></div><h3>กำลังบันทึกข้อมูล...</h3></div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ======================================
-        // เอา URL จาก Google Apps Script (ตอน Deploy) มาใส่ตรงนี้ครับ 👇
-        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx9FeaqVWvjpTohUHl6xo1NBTvIkHAchRwAkaUtBXLA7BfGN2gHCO4ze3NlOt8YoT78/exec'; 
-        // ======================================
+        // 🚨 เอา URL ของ Web ครับ 🚨
+        const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbx9FeaqVWvjpTohUHl6xo1NBTvIkHAchRwAkaUtBXLA7BfGN2gHCO4ze3NlOt8YoT78/exec';
 
         async function callAPI(action, payload = {}) {
-            if (WEB_APP_URL === 'วาง_URL_ตรงนี้') throw new Error("ลืมใส่ URL ครับ");
-            const res = await fetch(WEB_APP_URL, { method: 'POST', body: JSON.stringify({ action, ...payload }) });
-            const result = await res.json();
+            if (WEB_APP_URL === 'วาง_URL_ตรงนี้') throw new Error("ลืมใส่ URL ครับ!");
+            const response = await fetch(WEB_APP_URL, {
+                method: 'POST',
+                body: JSON.stringify({ action, ...payload })
+            });
+            const result = await response.json();
             if (!result.success) throw new Error(result.error);
             return result.data;
         }
 
-        // โหลดรายชื่อทันทีที่เปิดเว็บ
+        // โหลดชื่อทันทีที่เปิดเว็บ
         window.onload = async () => {
             try {
                 const names = await callAPI('getNames');
                 const select = document.getElementById('name');
                 select.innerHTML = '<option value="">-- เลือกชื่อของคุณ --</option>';
                 names.forEach(n => select.innerHTML += `<option value="${n}">${n}</option>`);
-            } catch (e) {
-                Swal.fire('Error', 'ดึงรายชื่อไม่สำเร็จ: ' + e.message, 'error');
-            }
+            } catch (e) { console.error(e); }
         };
 
         function switchTab(tab) {
             document.querySelectorAll('.custom-tab, .tab-pane').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll(tab === 'checkin' ? '.custom-tab:nth-child(1), #checkin-tab' : '.custom-tab:nth-child(2), #report-tab')
-                .forEach(el => el.classList.add('active'));
+            if (tab === 'checkin') {
+                document.querySelectorAll('.custom-tab')[0].classList.add('active');
+                document.getElementById('checkin-tab').classList.add('active');
+            } else {
+                document.querySelectorAll('.custom-tab')[1].classList.add('active');
+                document.getElementById('report-tab').classList.add('active');
+            }
         }
 
         async function verifyPassword() {
@@ -142,18 +177,20 @@
                     document.getElementById('passwordLockScreen').style.display = 'none';
                     document.getElementById('reportContent').style.display = 'block';
                     refreshData();
-                } else Swal.fire('ผิดพลาด', 'รหัสผ่านผิด', 'error');
+                } else Swal.fire('ผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error');
             } catch (e) { Swal.fire('Error', e.message, 'error'); }
         }
 
         function getLocation() {
             navigator.geolocation.getCurrentPosition(
-                pos => {
+                (pos) => {
                     document.getElementById('latitude').value = pos.coords.latitude;
                     document.getElementById('longitude').value = pos.coords.longitude;
-                    document.getElementById('yourLocation').value = 'สำเร็จ';
+                    document.getElementById('yourLocation').value = 'ดึงพิกัดสำเร็จ';
+                    document.getElementById('locationStatus').style.display = 'block';
+                    document.getElementById('locationStatus').innerHTML = 'ดึงพิกัดสำเร็จ';
                 },
-                () => Swal.fire('Error', 'ดึงพิกัดไม่ได้', 'error')
+                () => Swal.fire('Error', 'กรุณาเปิด GPS', 'error')
             );
         }
 
@@ -165,16 +202,24 @@
                 const img = new Image();
                 img.onload = () => {
                     const canvas = document.getElementById('canvas');
-                    canvas.width = 600; canvas.height = 800; // บีบอัดขนาด
+                    canvas.width = 600; canvas.height = 800;
                     canvas.getContext('2d').drawImage(img, 0, 0, 600, 800);
                     const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
                     document.getElementById('imageData').value = dataUrl;
                     document.getElementById('capturedImage').src = dataUrl;
                     document.getElementById('capturedImage').style.display = 'block';
+                    document.getElementById('retakeBtn').style.display = 'block';
                 };
                 img.src = e.target.result;
             };
             reader.readAsDataURL(file);
+        }
+
+        function retakeImage() {
+            document.getElementById('imageData').value = '';
+            document.getElementById('capturedImage').style.display = 'none';
+            document.getElementById('retakeBtn').style.display = 'none';
+            document.getElementById('fileInput').click();
         }
 
         document.getElementById('locationForm').onsubmit = async (e) => {
@@ -184,52 +229,69 @@
                 checkType: document.getElementById('checkType').value,
                 latitude: document.getElementById('latitude').value,
                 longitude: document.getElementById('longitude').value,
-                imageUrl: document.getElementById('imageData').value
+                imageData: document.getElementById('imageData').value
             };
-            
-            if (!data.latitude) return Swal.fire('Error', 'ดึงพิกัดก่อนครับ', 'warning');
-            if (!data.imageUrl) return Swal.fire('Error', 'ถ่ายรูปก่อนครับ', 'warning');
+            if (!data.latitude) return Swal.fire('แจ้งเตือน', 'กรุณาดึงพิกัดก่อน', 'warning');
+            if (!data.imageData) return Swal.fire('แจ้งเตือน', 'กรุณาถ่ายรูปก่อน', 'warning');
 
             document.getElementById('loadingOverlay').style.display = 'flex';
             try {
-                const imgUrl = await callAPI('uploadImage', { base64Data: data.imageUrl.split(',')[1] });
-                data.imageUrl = imgUrl;
-                const res = await callAPI('saveData', { data });
-                Swal.fire('สำเร็จ', res.message, 'success');
-                e.target.reset(); document.getElementById('capturedImage').style.display = 'none';
-            } catch (err) {
-                Swal.fire('ผิดพลาด', err.message, 'error');
-            } finally {
-                document.getElementById('loadingOverlay').style.display = 'none';
-            }
+                const imageUrl = await callAPI('uploadImage', { base64Data: data.imageData.split(',')[1] });
+                const result = await callAPI('saveData', { data: { ...data, imageUrl } });
+                Swal.fire('บันทึกสำเร็จ', result.message, 'success');
+                e.target.reset();
+                document.getElementById('capturedImage').style.display = 'none';
+            } catch (err) { Swal.fire('Error', err.message, 'error'); }
+            finally { document.getElementById('loadingOverlay').style.display = 'none'; }
         };
 
         let allData = [];
         async function refreshData() {
-            document.getElementById('dataContainer').innerHTML = 'กำลังโหลด...';
             try {
                 const data = await callAPI('getData');
                 allData = data.rows;
-                let html = '';
+                const container = document.getElementById('dataContainer');
+                container.innerHTML = '';
+                
+                const personMap = {};
                 allData.forEach(row => {
-                    html += `<div class="col-md-4"><div class="card person-card" onclick="showModal('${row[1]}')">
-                        <div class="thumbnail-container"><img src="${row[5]}" class="thumbnail-img"></div>
-                        <div class="card-body"><h5>${row[1]}</h5><p>${row[2]} - ${row[0]}</p></div>
-                    </div></div>`;
+                    if (!personMap[row[1]]) personMap[row[1]] = [];
+                    personMap[row[1]].push(row);
                 });
-                document.getElementById('dataContainer').innerHTML = html;
-            } catch (e) { Swal.fire('Error', e.message, 'error'); }
+
+                Object.keys(personMap).forEach(name => {
+                    const records = personMap[name];
+                    const img = records[0][5] || '';
+                    container.innerHTML += `
+                        <div class="col-md-4 mb-3">
+                            <div class="card person-card" onclick="showDetails('${name}')">
+                                <div class="thumbnail-container">
+                                    ${img ? `<img src="${img}" class="thumbnail-img">` : '<i class="fas fa-user fa-3x text-white"></i>'}
+                                </div>
+                                <div class="card-body">
+                                    <h5 class="card-title">${name}</h5>
+                                    <p class="card-text">จำนวนรายการ: ${records.length}</p>
+                                </div>
+                            </div>
+                        </div>`;
+                });
+            } catch (e) { console.error(e); }
         }
 
-        function showModal(name) {
+        function showDetails(name) {
             document.getElementById('modalPersonName').innerText = name;
-            let html = '';
-            allData.filter(r => r[1] === name).forEach(row => {
-                html += `<div class="timeline-item">
-                    <b>${row[2]}</b><br>${row[0]}<br>
-                    <a href="https://www.google.com/maps/search/?api=1&query=${row[8]},${row[9]}" target="_blank">เปิดแผนที่</a>
-                </div>`;
+            const records = allData.filter(r => r[1] === name);
+            let html = '<div class="timeline">';
+            records.forEach(r => {
+                html += `
+                    <div class="timeline-item">
+                        <div class="fw-bold">${r[2]}</div>
+                        <small class="text-muted">${r[0]}</small><br>
+                        ${r[7] ? `<div>เวลาทำงาน: ${r[7]}</div>` : ''}
+                        <a href="https://maps.google.com/?q=${r[8]},${r[9]}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">ดูแผนที่</a>
+                    </div>`;
             });
+            html += '</div>';
             document.getElementById('modalContent').innerHTML = html;
             new bootstrap.Modal(document.getElementById('detailsModal')).show();
         }
@@ -237,8 +299,8 @@
         async function generatePDF() {
             document.getElementById('loadingOverlay').style.display = 'flex';
             try {
-                const res = await callAPI('generateReport', { filteredData: allData });
-                Swal.fire('สำเร็จ', `<a href="${res.pdfUrl}" target="_blank">ดาวน์โหลด PDF</a>`, 'success');
+                const res = await callAPI('generateReport', { filteredData: allData, filterOptions: {} });
+                Swal.fire('สำเร็จ', `<a href="${res.pdfUrl}" target="_blank" class="btn btn-primary">ดาวน์โหลด PDF</a>`, 'success');
             } catch (e) { Swal.fire('Error', e.message, 'error'); }
             finally { document.getElementById('loadingOverlay').style.display = 'none'; }
         }
