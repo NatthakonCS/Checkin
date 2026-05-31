@@ -245,56 +245,125 @@
             finally { document.getElementById('loadingOverlay').style.display = 'none'; }
         };
 
-        let allData = [];
+                let allData = [];
+        let personDataMap = {};
+
         async function refreshData() {
             try {
                 const data = await callAPI('getData');
                 allData = data.rows;
-                const container = document.getElementById('dataContainer');
-                container.innerHTML = '';
-                
-                const personMap = {};
-                allData.forEach(row => {
-                    if (!personMap[row[1]]) personMap[row[1]] = [];
-                    personMap[row[1]].push(row);
-                });
-
-                Object.keys(personMap).forEach(name => {
-                    const records = personMap[name];
-                    const img = records[0][5] || '';
-                    container.innerHTML += `
-                        <div class="col-md-4 mb-3">
-                            <div class="card person-card" onclick="showDetails('${name}')">
-                                <div class="thumbnail-container">
-                                    ${img ? `<img src="${img}" class="thumbnail-img">` : '<i class="fas fa-user fa-3x text-white"></i>'}
-                                </div>
-                                <div class="card-body">
-                                    <h5 class="card-title">${name}</h5>
-                                    <p class="card-text">จำนวนรายการ: ${records.length}</p>
-                                </div>
-                            </div>
-                        </div>`;
-                });
+                displayData(allData);
             } catch (e) { console.error(e); }
         }
 
+        function displayData(rows) {
+            const container = document.getElementById('dataContainer');
+            container.innerHTML = '';
+            
+            if (!rows || rows.length === 0) {
+                container.innerHTML = '<div class="col-12 text-center text-muted py-5"><i class="fas fa-inbox fa-3x mb-3"></i><h5>ไม่พบข้อมูล</h5></div>';
+                return;
+            }
+
+            personDataMap = {};
+            rows.forEach(row => {
+                const name = row[1] || 'ไม่มีชื่อ';
+                if (!personDataMap[name]) personDataMap[name] = [];
+                personDataMap[name].push(row);
+            });
+
+            Object.keys(personDataMap).sort().forEach(name => {
+                const records = personDataMap[name];
+                // นับจำนวนเข้า-ออกงาน
+                const checkInCount = records.filter(r => r[2] === 'เข้างาน').length;
+                const checkOutCount = records.filter(r => r[2] === 'ออกงาน').length;
+                const imageUrl = records[0][5] || null;
+
+                const thumbHtml = imageUrl
+                    ? `<div class="thumbnail-container"><img src="${imageUrl}" alt="ภาพ" class="thumbnail-img" loading="lazy"></div>`
+                    : `<div class="thumbnail-container"><i class="fas fa-user no-image text-white fa-4x"></i></div>`;
+
+                const col = document.createElement('div');
+                col.className = 'col-md-6 col-lg-4 mb-4';
+                
+                // สร้างการ์ดดีไซน์เดิม พร้อมตัวเลขสถิติ
+                col.innerHTML = `
+                    <div class="card h-100 person-card" onclick="showDetails('${name}')">
+                        ${thumbHtml}
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="fas fa-user-circle me-2"></i>${name}</h5>
+                            <div class="stats-row" style="display: flex; gap: 10px; margin-top: 15px;">
+                                <div class="stat-item" style="flex: 1; text-align: center; padding: 10px; background: #f7fafc; border-radius: 10px;">
+                                    <span class="stat-number" style="font-size: 20px; font-weight: 700; color: #0099cc; display: block;">${checkInCount}</span>
+                                    <div class="stat-label" style="font-size: 11px; color: #718096;"><i class="fas fa-sign-in-alt me-1"></i>เข้างาน</div>
+                                </div>
+                                <div class="stat-item" style="flex: 1; text-align: center; padding: 10px; background: #f7fafc; border-radius: 10px;">
+                                    <span class="stat-number" style="font-size: 20px; font-weight: 700; color: #0099cc; display: block;">${checkOutCount}</span>
+                                    <div class="stat-label" style="font-size: 11px; color: #718096;"><i class="fas fa-sign-out-alt me-1"></i>ออกงาน</div>
+                                </div>
+                                <div class="stat-item" style="flex: 1; text-align: center; padding: 10px; background: #f7fafc; border-radius: 10px;">
+                                    <span class="stat-number" style="font-size: 20px; font-weight: 700; color: #0099cc; display: block;">${records.length}</span>
+                                    <div class="stat-label" style="font-size: 11px; color: #718096;"><i class="fas fa-list me-1"></i>ทั้งหมด</div>
+                                </div>
+                            </div>
+                            <div class="view-details" style="margin-top: 15px; text-align: center; color: #0099cc; font-weight: 500;">
+                                <i class="fas fa-info-circle me-1"></i>คลิกเพื่อดูรายละเอียด
+                            </div>
+                        </div>
+                    </div>`;
+                container.appendChild(col);
+            });
+        }
+
         function showDetails(name) {
-            document.getElementById('modalPersonName').innerText = name;
-            const records = allData.filter(r => r[1] === name);
+            document.getElementById('modalPersonName').innerHTML = `<i class="fas fa-user-circle me-2"></i>${name}`;
+            const records = personDataMap[name];
+            if (!records) return;
+
             let html = '<div class="timeline">';
             records.forEach(r => {
+                const dateTime = r[0] || 'ไม่ระบุวันที่';
+                const checkType = r[2] || 'ไม่ระบุ';
+                const fileUrl = r[4] || null;
+                const imageUrl = r[5] || null;
+                const workSummary = r[7] || '';
+                const latitude = r[8] || '';
+                const longitude = r[9] || '';
+
+                const typeClass = checkType === 'เข้างาน' ? 'checkin' : checkType === 'ออกงาน' ? 'checkout' : '';
+                const iconClass = checkType === 'เข้างาน' ? 'sign-in-alt' : 'sign-out-alt';
+
+                // ดึงรูปมาแสดงในป๊อปอัป ถ้ามีลิงก์ไฟล์เต็มให้กดคลิกเพื่อดูจอใหญ่ได้
+                const imageSection = imageUrl
+                    ? `<div class="timeline-image mt-3"><img src="${imageUrl}" alt="ภาพ" class="img-fluid rounded shadow-sm" style="max-height: 200px; object-fit: cover; cursor: pointer;" ${fileUrl ? `onclick="window.open('${fileUrl}', '_blank')"` : ''} loading="lazy"></div>`
+                    : '';
+
+                const workSection = workSummary
+                    ? `<div class="mt-2"><strong><i class="fas fa-clock me-1"></i>เวลาทำงาน:</strong> ${workSummary}</div>`
+                    : '';
+
+                // ลิงก์แผนที่แบบ Official ของ Google Maps
+                const locationSection = (latitude && longitude)
+                    ? `<div class="mt-2"><strong><i class="fas fa-map-marker-alt me-1"></i>พิกัด:</strong>
+                       <a href="https://www.google.com/maps/search/?api=1&query=${latitude},${longitude}" target="_blank" class="btn btn-sm btn-outline-primary ms-2">
+                       <i class="fas fa-map-marked-alt me-1"></i>เปิดแผนที่</a></div>`
+                    : '';
+
                 html += `
-                    <div class="timeline-item">
-                        <div class="fw-bold">${r[2]}</div>
-                        <small class="text-muted">${r[0]}</small><br>
-                        ${r[7] ? `<div>เวลาทำงาน: ${r[7]}</div>` : ''}
-                        <a href="https://maps.google.com/?q=${r[8]},${r[9]}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">ดูแผนที่</a>
+                    <div class="timeline-item ${typeClass}">
+                        <div class="timeline-date"><i class="far fa-calendar-alt me-1"></i>${dateTime}</div>
+                        <div class="timeline-type"><i class="fas fa-${iconClass} me-1"></i>${checkType}</div>
+                        ${workSection}
+                        ${locationSection}
+                        ${imageSection}
                     </div>`;
             });
             html += '</div>';
+            
             document.getElementById('modalContent').innerHTML = html;
             new bootstrap.Modal(document.getElementById('detailsModal')).show();
         }
+
 
         async function generatePDF() {
             document.getElementById('loadingOverlay').style.display = 'flex';
